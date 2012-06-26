@@ -5,6 +5,7 @@ import toxi.math.*;
 PImage workImg;
 
 float tolerance=0.2;
+int threshhold = 93;
 
 Capture video;
 int[] backgroundPixels;
@@ -18,6 +19,10 @@ void setup() {
   numPixels = video.width * video.height;
   backgroundPixels = new int[numPixels];
   workPixels = new int[numPixels];
+  
+  threshholdSlider = new Slider("threshhold", 100, (float)threshhold/100, 20, 20, width/2-20, 30);
+  sliders = new ArrayList();
+  sliders.add(threshholdSlider);
 }
 
 boolean doHistogram = false;
@@ -53,7 +58,7 @@ void draw() {
         presenceSum += tmp;
         // Render the difference image to the screen
         //pixels[i] = color(diffR, diffG, diffB);
-        if (tmp < threshhold){
+        if (tmp < threshholdSlider.val()){
           diffR = 0;
           diffG = 0;
           diffB = 0; 
@@ -99,6 +104,12 @@ void draw() {
     else
       image(video, 0, 0);
   }
+  for (int i = 0; i < sliders.size(); i++)
+    drawSlider((Slider)sliders.get(i));
+
+  if (activeSlider != null) {
+    text(activeSlider.name + "\n" + activeSlider.val(), width/2, 20);
+  }
 }
 
 void keyPressed() {
@@ -110,5 +121,67 @@ void keyPressed() {
     video.loadPixels();
     arraycopy(video.pixels, backgroundPixels);
   }
+}
+
+class Slider {
+  String name;
+  float minX, minY, maxX, maxY;
+  float val;
+  float range;
+  Slider(String n, float r, float d, float x1, float y1, float x2, float y2) {
+    name = n;
+    val = d;
+    range = r;
+    minX = min(x1, x2);
+    maxX = max(x1, x2);
+    minY = min(y1, y2);
+    maxY = max(y1, y2);
+  }
+
+  boolean contains(int mouseX, int mouseY) {
+    return (mouseX > minX && mouseX < maxX && mouseY > minY && mouseY < maxY);
+  } 
+  void update(float v) {
+    val = max(0.0, min(1.0, (v-minX)/(maxX-minX)));
+    println(name + ": " + val);
+  }
+  float val() {
+    return val * range;
+  }
+}
+
+ArrayList sliders;
+Slider activeSlider;
+Slider threshholdSlider;
+void mousePressed() {
+  if (activeSlider == null) {
+    for (int i = 0; i < sliders.size(); i++) {
+      if (((Slider)(sliders.get(i))).contains(mouseX, mouseY))
+        activeSlider = (Slider)sliders.get(i);
+    }
+  }
+}
+
+void mouseDragged() {
+  if (activeSlider != null) {
+    activeSlider.update(mouseX);
+  }
+}
+
+void mouseReleased() {
+  if (activeSlider != null) {
+    activeSlider.update(mouseX);
+    activeSlider = null;
+  }
+}
+
+void drawSlider(Slider s) {
+  noStroke();
+  strokeWeight(1);
+  fill(0, 255, 0);
+  rect(s.minX, s.minY, s.maxX-s.minX, s.maxY-s.minY); 
+  float valX = s.minX + (s.maxX - s.minX) * s.val;
+  fill(200, 200, 200);
+  rect(valX-2, s.minY, 4, s.maxY-s.minY);
 }
 
