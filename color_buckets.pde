@@ -2,6 +2,7 @@ import processing.video.*;
 import toxi.color.*;
 import toxi.math.*;
 
+
 PImage workImg;
 
 float tolerance=0.2;
@@ -12,23 +13,47 @@ int[] backgroundPixels;
 int[] workPixels;
 int numPixels;
 
+PDS150e ps;
+ColorBlast []cb;
+final int NUM_LIGHTS = 1;
+
 void setup() {
-  size(640, 480, P2D);
-  video = new Capture(this, width, height, 24);
-  workImg = new PImage(video.width, video.height, ARGB);
-  numPixels = video.width * video.height;
-  backgroundPixels = new int[numPixels];
-  workPixels = new int[numPixels];
-  
-  threshholdSlider = new Slider("threshhold", 100, (float)threshhold/100, 20, 20, width/2-20, 30);
-  sliders = new ArrayList();
-  sliders.add(threshholdSlider);
+    ps = new PDS150e();
+    cb = new ColorBlast[NUM_LIGHTS];
+    for (int i = 0; i < NUM_LIGHTS; i++){
+	cb[i] = new ColorBlast(1 + 3 * i);
+	ps.addFixture(cb[i]);
+    }
+    /*
+      size(640, 480, P2D);
+      video = new Capture(this, width, height, 24);
+      workImg = new PImage(video.width, video.height, ARGB);
+      numPixels = video.width * video.height;
+      backgroundPixels = new int[numPixels];
+      workPixels = new int[numPixels];
+      
+      threshholdSlider = new Slider("threshhold", 100, (float)threshhold/100, 20, 20, width/2-20, 30);
+      sliders = new ArrayList();
+      sliders.add(threshholdSlider);
+    */
 }
 
 boolean doHistogram = false;
 boolean showBars = false;
 
+int currentLight = 0;
+int lastLight = millis();
+
+
 void draw() {
+    if (millis() - lastLight > 2000){
+	ps.clear();
+	cb[currentLight].setColor(255,255,255, true);
+	currentLight++;
+        currentLight = currentLight % NUM_LIGHTS;
+    }
+    
+    /*
   if (video.available()) {
     video.read();
     if (doHistogram) {
@@ -58,15 +83,15 @@ void draw() {
         presenceSum += tmp;
         // Render the difference image to the screen
         //pixels[i] = color(diffR, diffG, diffB);
-        if (tmp < threshholdSlider.val()){
+        if (tmp < threshholdSlider.val()) {
           diffR = 0;
           diffG = 0;
-          diffB = 0; 
+          diffB = 0;
         }
         else {
           diffR = currR;
           diffG = currG;
-          diffB = currB; 
+          diffB = currB;
         }
         // The following line does the same thing much faster, but is more technical
         workPixels[i] = 0xFF000000 | (diffR << 16) | (diffG << 8) | diffB;
@@ -110,6 +135,7 @@ void draw() {
   if (activeSlider != null) {
     text(activeSlider.name + "\n" + activeSlider.val(), width/2, 20);
   }
+    */
 }
 
 void keyPressed() {
@@ -184,4 +210,3 @@ void drawSlider(Slider s) {
   fill(200, 200, 200);
   rect(valX-2, s.minY, 4, s.maxY-s.minY);
 }
-
